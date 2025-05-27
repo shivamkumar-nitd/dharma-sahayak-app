@@ -1,6 +1,8 @@
-
+// src/pages/Login.tsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../firebase';
 
 interface LoginProps {
   onLogin: (user: any) => void;
@@ -20,21 +22,25 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setLoading(true);
     setError('');
 
-    // Simulate API call
-    setTimeout(() => {
-      if (formData.email && formData.password) {
-        const user = {
-          id: 1,
-          email: formData.email,
-          name: formData.email.split('@')[0]
-        };
-        onLogin(user);
-        navigate('/');
-      } else {
-        setError('Please fill in all fields');
-      }
+    try {
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        formData.email,
+        formData.password
+      );
+
+      onLogin({
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+        name: userCredential.user.displayName
+      });
+      
+      navigate('/');
+    } catch (error: any) {
+      setError(getErrorMessage(error));
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -42,6 +48,21 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       ...formData,
       [e.target.name]: e.target.value
     });
+  };
+
+  const getErrorMessage = (error: any) => {
+    switch (error.code) {
+      case 'auth/invalid-email':
+        return 'Invalid email address';
+      case 'auth/user-not-found':
+        return 'User not found';
+      case 'auth/wrong-password':
+        return 'Invalid password';
+      case 'auth/too-many-requests':
+        return 'Too many attempts. Try again later';
+      default:
+        return error.message || 'Login failed';
+    }
   };
 
   return (
@@ -90,6 +111,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 {loading ? <span className="loading"></span> : 'Login'}
               </button>
             </form>
+
+            <div style={{ textAlign: 'center', marginTop: '16px' }}>
+              <Link to="/forgot-password" style={{ color: '#3b82f6', fontSize: '14px' }}>
+                Forgot password?
+              </Link>
+            </div>
 
             <p style={{ textAlign: 'center', marginTop: '24px', color: '#6b7280' }}>
               Don't have an account? <Link to="/signup" style={{ color: '#3b82f6' }}>Sign up</Link>

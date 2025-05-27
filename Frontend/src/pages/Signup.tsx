@@ -1,6 +1,9 @@
-
+// src/pages/Signup.tsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { auth, db } from '../firebase';
 
 interface SignupProps {
   onLogin: (user: any) => void;
@@ -30,23 +33,41 @@ const Signup: React.FC<SignupProps> = ({ onLogin }) => {
       return;
     }
 
-    // Simulate API call
-    setTimeout(() => {
-      if (formData.name && formData.email && formData.password) {
-        const user = {
-          id: 1,
-          email: formData.email,
-          name: formData.name,
-          phone: formData.phone,
-          language: formData.language
-        };
-        onLogin(user);
-        navigate('/');
-      } else {
-        setError('Please fill in all required fields');
-      }
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        formData.email,
+        formData.password
+      );
+
+      // Update user profile with display name
+      await updateProfile(userCredential.user, {
+        displayName: formData.name
+      });
+
+      // Save additional user data in Firestore
+      await setDoc(doc(db, "users", userCredential.user.uid), {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        language: formData.language,
+        createdAt: new Date()
+      });
+
+      onLogin({
+        uid: userCredential.user.uid,
+        email: formData.email,
+        name: formData.name,
+        phone: formData.phone,
+        language: formData.language
+      });
+      
+      navigate('/');
+    } catch (error: any) {
+      setError(getErrorMessage(error));
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -54,6 +75,19 @@ const Signup: React.FC<SignupProps> = ({ onLogin }) => {
       ...formData,
       [e.target.name]: e.target.value
     });
+  };
+
+  const getErrorMessage = (error: any) => {
+    switch (error.code) {
+      case 'auth/email-already-in-use':
+        return 'Email already in use';
+      case 'auth/invalid-email':
+        return 'Invalid email address';
+      case 'auth/weak-password':
+        return 'Password should be at least 6 characters';
+      default:
+        return error.message || 'Signup failed';
+    }
   };
 
   return (
@@ -127,8 +161,9 @@ const Signup: React.FC<SignupProps> = ({ onLogin }) => {
                   className="form-input"
                   value={formData.password}
                   onChange={handleChange}
-                  placeholder="Create a password"
+                  placeholder="Create a password (min 6 characters)"
                   required
+                  minLength={6}
                 />
               </div>
 
@@ -142,6 +177,7 @@ const Signup: React.FC<SignupProps> = ({ onLogin }) => {
                   onChange={handleChange}
                   placeholder="Confirm your password"
                   required
+                  minLength={6}
                 />
               </div>
 

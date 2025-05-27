@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+// src/App.tsx
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { auth } from './firebase';
+import { onAuthStateChanged, User } from 'firebase/auth';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -12,33 +15,45 @@ import LegalAid from './pages/LegalAid';
 import LostDocuments from './pages/LostDocuments';
 import './styles/globals.css';
 
-interface User {
-  id: number;
-  email: string;
-  name: string;
+interface AppUser {
+  uid: string;
+  email: string | null;
+  name: string | null;
   phone?: string;
   language?: string;
 }
 
 const App: React.FC = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
 
-  const handleLogin = (userData: User) => {
+  const handleLogin = (userData: AppUser) => {
     setUser(userData);
-    localStorage.setItem('nyayaai_user', JSON.stringify(userData));
   };
 
-  const handleLogout = () => {
-    setUser(null);
-    localStorage.removeItem('nyayaai_user');
-  };
-
-  // Check for existing user session on app load
-  React.useEffect(() => {
-    const savedUser = localStorage.getItem('nyayaai_user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      setUser(null);
+    } catch (error) {
+      console.error('Logout error:', error);
     }
+  };
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser: User | null) => {
+      if (firebaseUser) {
+        setUser({
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          name: firebaseUser.displayName,
+          // Add additional fields from your database if needed
+        });
+      } else {
+        setUser(null);
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   return (
@@ -51,8 +66,8 @@ const App: React.FC = () => {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
             <Route path="/signup" element={<Signup onLogin={handleLogin} />} />
-            <Route path="/chatbot" element={<Chatbot />} />
-            <Route path="/document-upload" element={<DocumentUpload />} />
+            <Route path="/chatbot" element={<Chatbot  />} />
+            <Route path="/document-upload" element={<DocumentUpload  />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/legal-aid" element={<LegalAid />} />
             <Route path="/lost-documents" element={<LostDocuments />} />

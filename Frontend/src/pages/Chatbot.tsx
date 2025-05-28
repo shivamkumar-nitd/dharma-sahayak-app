@@ -8,6 +8,7 @@ interface Message {
   type?: 'text' | 'document_guide' | 'quick_action';
   documents?: string[];
   actions?: Array<{label: string, action: string}>;
+  language?: string;
 }
 
 interface LegalDocument {
@@ -26,7 +27,8 @@ const Chatbot: React.FC = () => {
       id: 1,
       text: '🏛️ Hello! I am NyayaAI, your Indian legal assistant. I can help you with legal documents, procedures, and rights information. How can I assist you today?',
       sender: 'bot',
-      timestamp: new Date()
+      timestamp: new Date(),
+      language: 'en'
     }
   ]);
   const [inputText, setInputText] = useState('');
@@ -34,8 +36,17 @@ const Chatbot: React.FC = () => {
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [conversationHistory, setConversationHistory] = useState<string[]>([]);
+  const [selectedLanguage, setSelectedLanguage] = useState('en');
+  const [deepseekApiKey, setDeepseekApiKey] = useState('');
+  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
+
+  const languages = {
+    en: { name: 'English', flag: '🇺🇸' },
+    hi: { name: 'हिंदी', flag: '🇮🇳' },
+    bn: { name: 'বাংলা', flag: '🇧🇩' }
+  };
 
   const legalDocuments: LegalDocument[] = [
     {
@@ -110,7 +121,10 @@ const Chatbot: React.FC = () => {
       recognitionRef.current = new SpeechRecognition();
       recognitionRef.current.continuous = false;
       recognitionRef.current.interimResults = false;
-      recognitionRef.current.lang = 'en-US';
+      
+      // Set language based on selection
+      const langMap = { en: 'en-US', hi: 'hi-IN', bn: 'bn-IN' };
+      recognitionRef.current.lang = langMap[selectedLanguage as keyof typeof langMap] || 'en-US';
 
       recognitionRef.current.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript;
@@ -126,7 +140,7 @@ const Chatbot: React.FC = () => {
         setIsListening(false);
       };
     }
-  }, []);
+  }, [selectedLanguage]);
 
   useEffect(() => {
     scrollToBottom();
@@ -152,16 +166,21 @@ const Chatbot: React.FC = () => {
 
   const speakText = (text: string) => {
     if ('speechSynthesis' in window) {
-      // Cancel any ongoing speech
       window.speechSynthesis.cancel();
       
-      // Clean text for better speech
       const cleanText = text.replace(/[🏛️📋💒🏠🚔⚖️📘🤔💡❓📚🚨📞⚠️👥🎯⏰💰📄]/g, '').replace(/\*\*/g, '');
       
       const utterance = new SpeechSynthesisUtterance(cleanText);
       utterance.rate = 0.9;
       utterance.pitch = 1;
       utterance.volume = 0.8;
+      
+      // Set voice language
+      const voices = window.speechSynthesis.getVoices();
+      const langMap = { en: 'en', hi: 'hi', bn: 'bn' };
+      const targetLang = langMap[selectedLanguage as keyof typeof langMap];
+      const voice = voices.find(v => v.lang.startsWith(targetLang)) || voices[0];
+      if (voice) utterance.voice = voice;
       
       utterance.onstart = () => setIsSpeaking(true);
       utterance.onend = () => setIsSpeaking(false);
@@ -185,21 +204,77 @@ const Chatbot: React.FC = () => {
     ) || null;
   };
 
-  const generateConversationalResponse = (question: string): Message => {
-    const lowerQuestion = question.toLowerCase();
+  const getSystemPrompt = (language: string) => {
+    const prompts = {
+      en: `You are NyayaAI, an expert Indian legal assistant chatbot. You help users understand Indian legal procedures, documents, and rights. Always provide accurate, helpful information about Indian law, legal procedures, and constitutional rights. Keep responses conversational but informative. Use emojis appropriately. Focus on practical guidance and actionable advice.`,
+      hi: `आप NyayaAI हैं, एक विशेषज्ञ भारतीय कानूनी सहायक चैटबॉट। आप उपयोगकर्ताओं को भारतीय कानूनी प्रक्रियाओं, दस्तावेजों और अधिकारों को समझने में मदद करते हैं। हमेशा भारतीय कानून, कानूनी प्रक्रियाओं और संवैधानिक अधिकारों के बारे में सटीक, सहायक जानकारी प्रदान करें। उत्तर बातचीत के अंदाज में लेकिन जानकारीपूर्ण रखें।`,
+      bn: `আপনি NyayaAI, একজন বিশেষজ্ঞ ভারতীয় আইনী সহায়ক চ্যাটবট। আপনি ব্যবহারকারীদের ভারতীয় আইনী প্রক্রিয়া, নথি এবং অধিকার বুঝতে সাহায্য করেন। সর্বদা ভারতীয় আইন, আইনী প্রক্রিয়া এবং সাংবিধানিক অধিকার সম্পর্কে নির্ভুল, সহায়ক তথ্য প্রদান করুন। উত্তরগুলি কথোপকথনমূলক কিন্তু তথ্যবহুল রাখুন।`
+    };
+    return prompts[language as keyof typeof prompts] || prompts.en;
+  };
+
+  const callDeepSeekAPI = async (userMessage: string, language: string): Promise<string> => {
+    if (!deepseekApiKey) {
+      return language === 'hi' ? 'कृपया पहले DeepSeek API Key सेट करें।' : 
+             language === 'bn' ? 'দয়া করে প্রথমে DeepSeek API Key সেট করুন।' : 
+             'Please set DeepSeek API Key first.';
+    }
+
+    try {
+      const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${deepseekApiKey}`
+        },
+        body: JSON.stringify({
+          model: 'deepseek-chat',
+          messages: [
+            {
+              role: 'system',
+              content: getSystemPrompt(language)
+            },
+            {
+              role: 'user',
+              content: userMessage
+            }
+          ],
+          max_tokens: 1000,
+          temperature: 0.7
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
+    } catch (error) {
+      console.error('DeepSeek API Error:', error);
+      return language === 'hi' ? 'क्षमा करें, कुछ तकनीकी समस्या हुई है। कृपया बाद में पुनः प्रयास करें।' : 
+             language === 'bn' ? 'দুঃখিত, কিছু প্রযুক্তিগত সমস্যা হয়েছে। অনুগ্রহ করে পরে আবার চেষ্টা করুন।' : 
+             'Sorry, there was a technical issue. Please try again later.';
+    }
+  };
+
+  const generateConversationalResponse = async (question: string): Promise<Message> => {
     const matchedDocument = analyzeQuery(question);
     
-    // Add to conversation history
-    setConversationHistory(prev => [...prev.slice(-5), question]); // Keep last 5 exchanges
+    setConversationHistory(prev => [...prev.slice(-5), question]);
     
+    // For document-specific queries, provide structured response
     if (matchedDocument) {
+      const docResponse = `I can help you with **${matchedDocument.name}**! Here's what you need to know:\n\n**About:** ${matchedDocument.description}\n\n**Required Documents:**\n${matchedDocument.requiredDocs.map(doc => `• ${doc}`).join('\n')}\n\n**Process Steps:**\n${matchedDocument.process.map((step, index) => `${index + 1}. ${step}`).join('\n')}\n\n**Fees:** ${matchedDocument.fees}\n**Processing Time:** ${matchedDocument.timeframe}\n\nDo you need more detailed information about any specific aspect of this process?`;
+      
       return {
         id: messages.length + 1,
-        text: `I can help you with **${matchedDocument.name}**! Here's what you need to know:\n\n**About:** ${matchedDocument.description}\n\n**Required Documents:**\n${matchedDocument.requiredDocs.map(doc => `• ${doc}`).join('\n')}\n\n**Process Steps:**\n${matchedDocument.process.map((step, index) => `${index + 1}. ${step}`).join('\n')}\n\n**Fees:** ${matchedDocument.fees}\n**Processing Time:** ${matchedDocument.timeframe}\n\nDo you need more detailed information about any specific aspect of this process?`,
+        text: docResponse,
         sender: 'bot',
         timestamp: new Date(),
         type: 'document_guide',
         documents: [matchedDocument.name],
+        language: selectedLanguage,
         actions: [
           { label: 'Required Documents', action: 'show_documents' },
           { label: 'Step by Step Process', action: 'show_process' },
@@ -208,99 +283,15 @@ const Chatbot: React.FC = () => {
       };
     }
 
-    // Conversational responses based on intent
-    if (lowerQuestion.includes('hello') || lowerQuestion.includes('hi') || lowerQuestion.includes('hey')) {
-      return {
-        id: messages.length + 1,
-        text: `Hello! Great to meet you! I'm here to help you navigate India's legal system. Whether you need information about documents, legal procedures, or your rights, I'm here to assist. What specific legal matter can I help you with today?`,
-        sender: 'bot',
-        timestamp: new Date()
-      };
-    }
-
-    if (lowerQuestion.includes('thank') || lowerQuestion.includes('thanks')) {
-      return {
-        id: messages.length + 1,
-        text: `You're very welcome! I'm glad I could help. Remember, I'm always here if you have more legal questions. Is there anything else about Indian legal procedures or documents you'd like to know?`,
-        sender: 'bot',
-        timestamp: new Date()
-      };
-    }
-
-    if (lowerQuestion.includes('legal aid') || lowerQuestion.includes('free legal help')) {
-      return {
-        id: messages.length + 1,
-        text: `⚖️ **Free Legal Aid in India** - You have the right to legal assistance!\n\n🏛️ **Contact Points:**\n• District Legal Services Authority\n• Nearest Legal Aid Clinic\n• Helpline: 15100\n• Website: nalsa.gov.in\n\n👥 **Eligibility:**\n• Women, SC/ST, Children\n• Persons with disabilities\n• BPL families\n• Senior citizens (60+ years)\n• Victims of trafficking/acid attacks\n\n🎯 **Free Services:**\n• Legal consultation\n• Court representation\n• Document preparation\n• Court fee exemption\n\nWould you like me to help you find the nearest legal aid center?`,
-        sender: 'bot',
-        timestamp: new Date(),
-        type: 'quick_action',
-        actions: [
-          { label: 'Find Nearest Legal Aid Center', action: 'find_center' },
-          { label: 'Emergency Legal Contacts', action: 'emergency_contacts' }
-        ]
-      };
-    }
-
-    if (lowerQuestion.includes('emergency') || lowerQuestion.includes('urgent') || lowerQuestion.includes('help me')) {
-      const contactsList = Object.entries(emergencyContacts)
-        .map(([service, number]) => `• ${service}: ${number}`)
-        .join('\n');
-      
-      return {
-        id: messages.length + 1,
-        text: `🚨 **Emergency Legal Contacts:**\n\n${contactsList}\n\n⚠️ **For Immediate Help:**\n• Go to nearest police station immediately\n• Women in distress: Call 181\n• Legal emergency: Call 15100\n• Keep all relevant documents ready\n\nWhat specific emergency situation are you facing? I can provide more targeted guidance.`,
-        sender: 'bot',
-        timestamp: new Date(),
-        type: 'quick_action'
-      };
-    }
-
-    if (lowerQuestion.includes('lawyer') || lowerQuestion.includes('advocate')) {
-      return {
-        id: messages.length + 1,
-        text: `Finding the right lawyer is crucial for your case. Here's how to proceed:\n\n🔍 **Finding a Lawyer:**\n• Contact your State Bar Council\n• Visit District Court advocate directories\n• Ask for referrals from Legal Aid Centers\n• Check online lawyer directories\n\n💰 **Cost Considerations:**\n• Government rates for various services\n• Free legal aid if you're eligible\n• Always discuss fees upfront\n• Get fee agreement in writing\n\n📋 **What to Prepare:**\n• All relevant documents\n• Clear timeline of events\n• Questions you want to ask\n• Your budget for legal services\n\nWhat type of legal matter do you need a lawyer for?`,
-        sender: 'bot',
-        timestamp: new Date()
-      };
-    }
-
-    // Court-related queries
-    if (lowerQuestion.includes('court') || lowerQuestion.includes('case') || lowerQuestion.includes('hearing')) {
-      return {
-        id: messages.length + 1,
-        text: `Court procedures can be complex, but I can help you understand them better.\n\n🏛️ **Court System in India:**\n• Supreme Court (Highest)\n• High Courts (State level)\n• District Courts (Local level)\n• Specialized courts (Family, Consumer, etc.)\n\n📅 **Court Procedures:**\n• File petition/application\n• Pay court fees\n• Serve notice to other party\n• Attend hearings as scheduled\n• Follow court orders\n\n💡 **Tips:**\n• Always carry all documents\n• Dress formally\n• Arrive early\n• Bring a lawyer if possible\n• Keep copies of everything\n\nWhat specific court-related question can I help you with?`,
-        sender: 'bot',
-        timestamp: new Date()
-      };
-    }
-
-    // Context-aware responses based on conversation history
-    const recentContext = conversationHistory.slice(-2).join(' ').toLowerCase();
+    // For general queries, use DeepSeek API
+    const aiResponse = await callDeepSeekAPI(question, selectedLanguage);
     
-    if (recentContext.includes('property') && lowerQuestion.includes('dispute')) {
-      return {
-        id: messages.length + 1,
-        text: `Since we were discussing property matters, here's specific guidance for property disputes:\n\n⚖️ **Property Dispute Resolution:**\n• Try mediation first (faster & cheaper)\n• Approach Civil Court if mediation fails\n• Gather all property documents\n• Get property survey done\n• Consult property lawyer\n\n📄 **Essential Documents:**\n• Original sale deed\n• Property tax receipts\n• Survey settlement records\n• Mutation records\n• Possession certificates\n\n🎯 **Alternative Resolution:**\n• Lok Adalat (faster resolution)\n• Arbitration (if agreed)\n• Family settlement (for family disputes)\n\nDo you have all the necessary property documents?`,
-        sender: 'bot',
-        timestamp: new Date()
-      };
-    }
-
-    // General conversational response
-    const responses = [
-      `I understand you're asking about "${question}". Let me help you with this legal matter.`,
-      `That's a good question about "${question}". Here's what I can tell you based on Indian law.`,
-      `Thanks for asking about "${question}". This is an important legal topic.`,
-      `I see you're interested in "${question}". Let me provide you with relevant legal information.`
-    ];
-    
-    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-
     return {
       id: messages.length + 1,
-      text: `${randomResponse}\n\nBased on Indian legal system, here are some general guidelines:\n\n🏛️ **Recommendations:**\n1. Contact your local Legal Services Authority\n2. Visit District Court help desk\n3. Call Legal Helpline: 15100\n4. Consult with a qualified advocate\n5. Gather all relevant documents\n\n💡 **For Better Assistance:**\n• Provide more specific details about your situation\n• Mention the state/jurisdiction\n• Specify the type of legal issue\n• Ask about particular documents or procedures\n\n❓ Would you like information about any specific legal document, procedure, or your rights in this matter?`,
+      text: aiResponse,
       sender: 'bot',
       timestamp: new Date(),
+      language: selectedLanguage,
       actions: [
         { label: 'Show All Legal Documents', action: 'show_all_docs' },
         { label: 'Find Legal Aid', action: 'find_legal_aid' },
@@ -316,7 +307,8 @@ const Chatbot: React.FC = () => {
       id: messages.length + 1,
       text: inputText,
       sender: 'user',
-      timestamp: new Date()
+      timestamp: new Date(),
+      language: selectedLanguage
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -324,15 +316,25 @@ const Chatbot: React.FC = () => {
     setInputText('');
     setLoading(true);
 
-    // Simulate AI processing time with more realistic delay
-    setTimeout(() => {
-      const botResponse = generateConversationalResponse(currentInput);
+    try {
+      const botResponse = await generateConversationalResponse(currentInput);
       setMessages(prev => [...prev, botResponse]);
-      setLoading(false);
-      
-      // Auto-speak bot response
       speakText(botResponse.text);
-    }, 1500 + Math.random() * 1000); // 1.5-2.5 seconds
+    } catch (error) {
+      console.error('Error generating response:', error);
+      const errorMessage: Message = {
+        id: messages.length + 1,
+        text: selectedLanguage === 'hi' ? 'क्षमा करें, कुछ समस्या हुई है।' : 
+              selectedLanguage === 'bn' ? 'দুঃখিত, কিছু সমস্যা হয়েছে।' : 
+              'Sorry, something went wrong.',
+        sender: 'bot',
+        timestamp: new Date(),
+        language: selectedLanguage
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleQuickQuestion = (question: string) => {
@@ -348,7 +350,8 @@ const Chatbot: React.FC = () => {
           id: messages.length + 1,
           text: `📚 **Available Legal Document Services:**\n\n${legalDocuments.map((doc, index) => `${index + 1}. **${doc.name}**\n   ${doc.description}\n   Time: ${doc.timeframe} | Fees: ${doc.fees}`).join('\n\n')}\n\nTo get detailed information about any document, just type its name or ask me about it!`,
           sender: 'bot',
-          timestamp: new Date()
+          timestamp: new Date(),
+          language: selectedLanguage
         };
         break;
         
@@ -357,7 +360,8 @@ const Chatbot: React.FC = () => {
           id: messages.length + 1,
           text: `🚨 **Emergency Legal Contact Numbers:**\n\n${Object.entries(emergencyContacts).map(([service, number]) => `📞 ${service}: ${number}`).join('\n')}\n\n⚠️ Save these numbers and use them when needed. Remember, in legal emergencies, time is crucial!`,
           sender: 'bot',
-          timestamp: new Date()
+          timestamp: new Date(),
+          language: selectedLanguage
         };
         break;
         
@@ -366,7 +370,8 @@ const Chatbot: React.FC = () => {
           id: messages.length + 1,
           text: `⚖️ **To find your nearest Legal Aid Center:**\n\n1. Tell me your district name\n2. Or provide your PIN code\n3. Or simply ask "legal aid near me"\n\n📞 **Immediate Help:** 15100\n🌐 **Official Website:** nalsa.gov.in\n📧 **Email Support:** Available on website\n\n💡 **Tip:** Legal aid is your constitutional right - don't hesitate to use it!`,
           sender: 'bot',
-          timestamp: new Date()
+          timestamp: new Date(),
+          language: selectedLanguage
         };
         break;
         
@@ -375,12 +380,31 @@ const Chatbot: React.FC = () => {
           id: messages.length + 1,
           text: `I'm processing your request. How else can I assist you with your legal queries?`,
           sender: 'bot',
-          timestamp: new Date()
+          timestamp: new Date(),
+          language: selectedLanguage
         };
     }
     
     setMessages(prev => [...prev, actionMessage]);
     speakText(actionMessage.text);
+  };
+
+  const handleLanguageChange = (lang: string) => {
+    setSelectedLanguage(lang);
+    // Update the welcome message in the new language
+    const welcomeMessages = {
+      en: '🏛️ Hello! I am NyayaAI, your Indian legal assistant. I can help you with legal documents, procedures, and rights information. How can I assist you today?',
+      hi: '🏛️ नमस्ते! मैं NyayaAI हूं, आपका भारतीय कानूनी सहायक। मैं आपकी कानूनी दस्तावेजों, प्रक्रियाओं और अधिकारों की जानकारी में मदद कर सकता हूं। आज मैं आपकी कैसे सहायता कर सकता हूं?',
+      bn: '🏛️ নমস্কার! আমি NyayaAI, আপনার ভারতীয় আইনী সহায়ক। আমি আপনাকে আইনী নথি, প্রক্রিয়া এবং অধিকারের তথ্য দিয়ে সাহায্য করতে পারি। আজ আমি আপনাকে কীভাবে সাহায্য করতে পারি?'
+    };
+    
+    setMessages([{
+      id: 1,
+      text: welcomeMessages[lang as keyof typeof welcomeMessages],
+      sender: 'bot',
+      timestamp: new Date(),
+      language: lang
+    }]);
   };
 
   return (
@@ -390,6 +414,53 @@ const Chatbot: React.FC = () => {
         <div className="text-center mb-6">
           <h1 className="text-4xl font-bold text-gray-800 mb-2">🏛️ NyayaAI Legal Assistant</h1>
           <p className="text-gray-600">Indian Legal Assistant - Protecting Your Legal Rights</p>
+        </div>
+
+        {/* API Key Input */}
+        <div className="mb-4">
+          <button
+            onClick={() => setShowApiKeyInput(!showApiKeyInput)}
+            className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
+          >
+            {deepseekApiKey ? '🔑 API Key Set' : '🔑 Set DeepSeek API Key'}
+          </button>
+          {showApiKeyInput && (
+            <div className="mt-2 flex space-x-2">
+              <input
+                type="password"
+                placeholder="Enter DeepSeek API Key"
+                value={deepseekApiKey}
+                onChange={(e) => setDeepseekApiKey(e.target.value)}
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm"
+              />
+              <button
+                onClick={() => setShowApiKeyInput(false)}
+                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm"
+              >
+                Save
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Language Selector */}
+        <div className="flex justify-center mb-6">
+          <div className="flex space-x-2 bg-white rounded-lg p-2 shadow-md">
+            {Object.entries(languages).map(([code, lang]) => (
+              <button
+                key={code}
+                onClick={() => handleLanguageChange(code)}
+                className={`px-4 py-2 rounded-md font-medium transition-all flex items-center space-x-2 ${
+                  selectedLanguage === code
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                }`}
+              >
+                <span>{lang.flag}</span>
+                <span>{lang.name}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Voice Controls */}
@@ -536,5 +607,3 @@ const Chatbot: React.FC = () => {
 };
 
 export default Chatbot;
-
-///////

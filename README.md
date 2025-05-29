@@ -50,17 +50,11 @@ NyayaAI is a multilingual legal chatbot and document analysis tool designed for 
 
 ### Frontend
 ```bash
-git clone https:https://github.com/shivamkumar-nitd/dharma-sahayak-app.git
-cd nyayaai/frontend
+git clone https: https://github.com/shivamkumar-nitd/dharma-sahayak-app.git
+cd frontend
 npm install
 npm start
-```
-
-### Backend
-```bash
-cd ../backend
-pip install -r requirements.txt
-uvicorn main:app --reload
+npm run dev
 ```
 
 ### Prerequisites
@@ -70,12 +64,61 @@ uvicorn main:app --reload
 
 ---
 
+## 💡 Why NyayaAI? | Innovation & Impact
+
+NyayaAI goes beyond being just a legal chatbot or document scanner — it’s a grassroots legal empowerment tool designed for the digitally underserved.
+
+### 🌍 Real-World Relevance
+
+- **Bridging the Legal Awareness Gap**  
+  Millions in India don’t know their rights or how to act on them. NyayaAI empowers them with legal knowledge in simple, understandable, and regional language.
+
+- **Targeted for Rural India**  
+  Unlike complex portals designed for urban use, NyayaAI is optimized for low-bandwidth areas and users with limited digital literacy.
+
+### 🌟 Innovative Edge
+
+- **Voice Interaction for the Illiterate**  
+  With voice input and text-to-speech output, NyayaAI supports users who cannot read or type — bringing legal help to those who need it most.
+
+- **Camera-to-Insight Experience**  
+  Users can simply click a photo of a document, and the system does the rest: extracts, analyzes, classifies, summarizes, and flags issues — all in real time.
+
+- **Step-by-Step Correction Roadmaps**  
+  NyayaAI doesn’t stop at showing errors — it guides users through how to fix them, with:
+  - Exact documents required  
+  - Estimated processing time  
+  - Fees involved  
+  - Direct links to official portals
+
+- **Recovery Guide for Lost Documents**  
+  Unique feature that helps users regenerate lost legal records — from FIRs to marriage certificates — with stepwise clarity.
+
+### 🔓 Designed for Growth
+
+- **Modular & Open-Source Architecture**  
+  The platform is designed to be extendable with:
+  - More Indian languages (e.g., Marathi, Tamil)  
+  - More document types (e.g., Legal Heir, Death Certificates)  
+  - More integrations (e.g., eDistrict APIs, WhatsApp bots)
+
+### 🫱🏽‍🫲🏾 Social Impact
+
+- Reduces exploitation by legal middlemen  
+- Promotes self-reliance in navigating the justice system  
+- Connects users to real legal aid centers and NGOs in their area  
+- Builds trust and transparency by verifying document authenticity  
+
+**NyayaAI is not just a tech product — it's a mission for justice through technology.**  
+It empowers the common citizen with a virtual legal assistant that fits in their pocket.
+
+
 ## 📤 Submission Info
 
-- **GitHub Repo Link**:https://github.com/shivamkumar-nitd/dharma-sahayak-app
+- **GitHub Repo Link**: https://github.com/shivamkumar-nitd/dharma-sahayak-app
 - **Project Title**: NyayaAI
 - **Domain**: Open Innovation
 - **Short Write-up**: AI-powered legal chatbot and document analysis platform for Indian rural users.
-- **Contact Info**: Phone->+919153628776, e-mail id->123shivamkumar123456@gmail.com
+- **Contact Info**: Phone-> +919153628776, e-mail id-> 123shivamkumar123456@gmail.com
 
 ---

@@ -74,7 +74,7 @@ uvicorn main:app --reload
 
 - **GitHub Repo Link**:https://github.com/shivamkumar-nitd/dharma-sahayak-app
 - **Project Title**: NyayaAI
-- **Domain**: Legal Tech / AI for Social Impact
+- **Domain**: Open Innovation
 - **Short Write-up**: AI-powered legal chatbot and document analysis platform for Indian rural users.
 - **Contact Info**: Phone->+919153628776, e-mail id->123shivamkumar123456@gmail.com
 

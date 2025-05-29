@@ -43,7 +43,7 @@ const Footer: React.FC = () => {
         
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '24px', textAlign: 'center' }}>
           <p style={{ margin: 0, opacity: 0.8 }}>
-            © 2024 NyayaAI. Built with ❤️ for Rural India. Open source initiative for legal empowerment.
+            © 2025 NyayaAI. Built with ❤️ for Rural India. Open source initiative for legal empowerment.
           </p>
         </div>
       </div>

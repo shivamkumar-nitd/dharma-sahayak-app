@@ -93,6 +93,12 @@ NyayaAI goes beyond being just a legal chatbot or document scanner — it’s a 
 - **Recovery Guide for Lost Documents**  
   Unique feature that helps users regenerate lost legal records — from FIRs to marriage certificates — with stepwise clarity.
 
+- **Zero-Install, Browser-Based Access**
+Fully functional from a browser — no app installation needed. Ideal for users with low-end phones or no app store access.
+
+- **Context-Aware Query Understanding**
+NyayaAI doesn’t just parse keywords — it understands context (e.g., "My land dispute with uncle") and intelligently routes the query to the right legal domain (Land + Family).
+
 ### 🔓 Designed for Growth
 
 - **Modular & Open-Source Architecture**  

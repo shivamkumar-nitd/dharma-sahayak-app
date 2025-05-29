@@ -42,6 +42,9 @@ const Footer: React.FC = () => {
         </div>
         
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '24px', textAlign: 'center' }}>
+          <p style={{ margin: 1, opacity: 0.8 }}>
+            Developed by Team Technoverse — Shivam Kumar, Mahim Ali Sekh and Indranil Dhar.
+          </p>
           <p style={{ margin: 0, opacity: 0.8 }}>
             © 2025 NyayaAI. Built with ❤️ for Rural India. Open source initiative for legal empowerment.
           </p>

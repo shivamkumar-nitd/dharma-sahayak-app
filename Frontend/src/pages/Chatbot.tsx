@@ -37,8 +37,9 @@ const Chatbot: React.FC = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [conversationHistory, setConversationHistory] = useState<string[]>([]);
   const [selectedLanguage, setSelectedLanguage] = useState('en');
-  const [deepseekApiKey, setDeepseekApiKey] = useState('');
-  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
+  const DEEPSEEK_API_KEY = 'AIzaSyAa85MWZ213XpwiRGFoudjDxZFiIIs3pYY'; // Replace with your actual key
+  // const [deepseekApiKey, setDeepseekApiKey] = useState('');
+  // const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
 
@@ -213,50 +214,43 @@ const Chatbot: React.FC = () => {
     return prompts[language as keyof typeof prompts] || prompts.en;
   };
 
-  const callDeepSeekAPI = async (userMessage: string, language: string): Promise<string> => {
-    if (!deepseekApiKey) {
-      return language === 'hi' ? 'कृपया पहले DeepSeek API Key सेट करें।' : 
-             language === 'bn' ? 'দয়া করে প্রথমে DeepSeek API Key সেট করুন।' : 
-             'Please set DeepSeek API Key first.';
+ 
+
+const callDeepSeekAPI = async (userMessage: string, language: string): Promise<string> => {
+  try {
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          { role: 'system', content: getSystemPrompt(language) },
+          { role: 'user', content: userMessage }
+        ],
+        max_tokens: 1000,
+        temperature: 0.7
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status}`);
     }
 
-    try {
-      const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${deepseekApiKey}`
-        },
-        body: JSON.stringify({
-          model: 'deepseek-chat',
-          messages: [
-            {
-              role: 'system',
-              content: getSystemPrompt(language)
-            },
-            {
-              role: 'user',
-              content: userMessage
-            }
-          ],
-          max_tokens: 1000,
-          temperature: 0.7
-        })
-      });
+    const data = await response.json();
+    return data.choices[0]?.message?.content || 'No response from DeepSeek.';
+  } catch (error) {
+    console.error('DeepSeek API Error:', error);
+    return language === 'hi'
+      ? 'क्षमा करें, कुछ तकनीकी समस्या हुई है।'
+      : language === 'bn'
+      ? 'দুঃখিত, কিছু প্রযুক্তিগত সমস্যা হয়েছে।'
+      : 'Sorry, technical error occurred.';
+  }
+};
 
-      if (!response.ok) {
-        throw new Error(`API Error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
-    } catch (error) {
-      console.error('DeepSeek API Error:', error);
-      return language === 'hi' ? 'क्षमा करें, कुछ तकनीकी समस्या हुई है। कृपया बाद में पुनः प्रयास करें।' : 
-             language === 'bn' ? 'দুঃখিত, কিছু প্রযুক্তিগত সমস্যা হয়েছে। অনুগ্রহ করে পরে আবার চেষ্টা করুন।' : 
-             'Sorry, there was a technical issue. Please try again later.';
-    }
-  };
 
   const generateConversationalResponse = async (question: string): Promise<Message> => {
     const matchedDocument = analyzeQuery(question);
@@ -407,6 +401,8 @@ const Chatbot: React.FC = () => {
     }]);
   };
 
+   
+     
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="max-w-4xl mx-auto">
@@ -417,7 +413,7 @@ const Chatbot: React.FC = () => {
         </div>
 
         {/* API Key Input */}
-        <div className="mb-4">
+        {/* <div className="mb-4">
           <button
             onClick={() => setShowApiKeyInput(!showApiKeyInput)}
             className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
@@ -441,7 +437,7 @@ const Chatbot: React.FC = () => {
               </button>
             </div>
           )}
-        </div>
+        </div> */}
 
         {/* Language Selector */}
         <div className="flex justify-center mb-6">

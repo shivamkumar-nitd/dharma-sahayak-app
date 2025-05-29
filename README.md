@@ -31,8 +31,7 @@ NyayaAI is a multilingual legal chatbot and document analysis tool designed for 
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: React.js, Tailwind CSS
-- **Backend**: FastAPI (Python)
+- **Frontend**: React.js, Tailwind CSS, Nextjs
 - **OCR**: Tesseract, LayoutParser
 - **AI Models**: BERT, Vision Transformers
 - **Speech I/O**: Web Speech API / Google TTS
@@ -98,9 +97,8 @@ NyayaAI goes beyond being just a legal chatbot or document scanner — it’s a 
 
 - **Modular & Open-Source Architecture**  
   The platform is designed to be extendable with:
-  - More Indian languages (e.g., Marathi, Tamil)  
+  - More Indian languages (e.g., Hindi, Bengali, can add more language)  
   - More document types (e.g., Legal Heir, Death Certificates)  
-  - More integrations (e.g., eDistrict APIs, WhatsApp bots)
 
 ### 🫱🏽‍🫲🏾 Social Impact
 

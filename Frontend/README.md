@@ -41,7 +41,6 @@ NyayaAI is a multilingual legal chatbot and document analysis tool designed for 
 ---
 
 ## 🖼 Screenshots
-
 ![1](../Frontend/src/assets/1.jpg)
 ![2](../Frontend/src/assets/2.jpg)
 ![3](../Frontend/src/assets/3.jpg)

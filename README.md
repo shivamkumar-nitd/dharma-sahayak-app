@@ -42,7 +42,7 @@ NyayaAI is a multilingual legal chatbot and document analysis tool designed for 
 
 ## 🖼 Screenshots
 
-![1](../dharma-sahayak-app/Frontend/src/assets/1.jpg)
+![1](./assets/1.jpg)
 ![2](../dharma-sahayak-app/Frontend/src/assets/2.jpg)
 ![3](../dharma-sahayak-app/Frontend/src/assets/3.jpg)
 ![4](../dharma-sahayak-app/Frontend/src/assets/4.jpg)

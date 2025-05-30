@@ -1,73 +1,85 @@
-# Welcome to your Lovable project
+# 🌟 NyayaAI – Accessible Legal Intelligence for Every Citizen
 
-## Project info
+## 🧩 Problem Statement
 
-**URL**: https://lovable.dev/projects/a7c13d0d-517d-4c42-9088-94762afd175f
+Millions of rural and semi-urban Indians face difficulty understanding legal procedures due to language barriers, document complexity, and limited access to legal aid. There is a lack of easy-to-use digital tools tailored for regional and multilingual users that can assist with document verification, legal queries, and aid discovery.
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## 🔍 Approach & Solution
 
-**Use Lovable**
+NyayaAI is a multilingual legal chatbot and document analysis tool designed for rural India. It combines AI, OCR, and NLP technologies to understand legal queries in regional languages, scan and verify documents, and provide simplified legal guidance. The solution is built as a responsive web app accessible even on low-bandwidth networks.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/a7c13d0d-517d-4c42-9088-94762afd175f) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🚀 Features
 
-**Use your preferred IDE**
+1. *Multilingual Legal Chatbot* – Understands Hindi, English, Bengali queries, offers legal Q&A, voice I/O
+2. *Document Upload & OCR* – Scan/upload images or PDFs (handwritten/printed) with Tesseract + LayoutParser
+3. *Document Classification* – Detects type (e.g., FIR, Land Record, Marriage Cert.) using BERT/Vision models
+4. *Authenticity Check* – Flags document as Original/Fake/Tampered using login, signup and forgot password.
+5. *Summary Extraction* – Highlights names, dates, case IDs, involved parties in simple language
+6. *Correction Assistant* – Guides on how to fix incorrect or fake documents with links, steps, fees
+7. *Live Camera Scanning* – Capture directly from webcam → OCR → classify → summarize
+8. *Legal FAQ Database* – Common questions like RTI, FIR, Lok Adalat, categorized and multilingual
+9. *Lost Document Recovery* – Step-by-step help to regenerate lost legal documents
+10. *Legal Aid Directory* – List of nearby legal aid centers, NGOs, WhatsApp legal support groups
+11. *Responsive UI* – Optimized for mobile/desktop + low-bandwidth areas
+12. *Open-Source & Modular* – Extendable for more languages, document types, and use-cases
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🛠 Tech Stack
 
-Follow these steps:
+- *Frontend*: React.js, Tailwind CSS
+- *Backend*: Node.js
+- *OCR*: Tesseract, LayoutParser
+- *AI Models*: BERT, Vision Transformers
+- *Speech I/O*: Web Speech API / Google TTS
+- *Deployment*: Optional support for AWS S3 / Firebase
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+---
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## 🖼 Screenshots
 
-# Step 3: Install the necessary dependencies.
-npm i
+![1](../Frontend/src/assets/1.jpg)
+![2](../Frontend/src/assets/2.jpg)
+![3](../Frontend/src/assets/3.jpg)
+![4](../Frontend/src/assets/4.jpg)
+![5](../Frontend/src/assets/5.jpg)
+![6](../Frontend/src/assets/6.jpg)
+![7](../Frontend/src/assets/7.jpg)
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+## ⚙ Run Instructions
+
+### Frontend
+bash
+git clone https:https://github.com/shivamkumar-nitd/dharma-sahayak-app.git
+cd nyayaai/frontend
+npm install
 npm run dev
-```
 
-**Edit a file directly in GitHub**
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Backend
+bash
+cd ../backend
+pip install -r requirements.txt
+uvicorn main:app --reload
 
-**Use GitHub Codespaces**
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Prerequisites
+- Node.js 16+
+- Python 3.9+
+- Tesseract OCR installed locally
 
-## What technologies are used for this project?
+---
 
-This project is built with:
+## 📤 Submission Info
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- *GitHub Repo Link*:https://github.com/shivamkumar-nitd/dharma-sahayak-app
+- *Project Title*: NyayaAI
+- *Domain*: Legal Tech / AI for Social Impact
+- *Short Write-up*: AI-powered legal chatbot and document analysis platform for Indian rural users.
+- *Contact Info*: Phone->+919153628776, e-mail id->123shivamkumar123456@gmail.com
 
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/a7c13d0d-517d-4c42-9088-94762afd175f) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+---
